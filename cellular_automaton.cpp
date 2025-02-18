@@ -2,15 +2,16 @@
 #include <vector>
 #include <cstdlib>
 #include <ctime>
+#include <cstdint> // For uint8_t
 
 // Define the grid dimensions
 const int WIDTH = 50;
 const int HEIGHT = 50;
 
-// The current state of the grid
-std::vector<bool> grid(WIDTH *HEIGHT);
+// The current state of the grid (using uint8_t instead of bool)
+std::vector<uint8_t> grid(WIDTH *HEIGHT);
 // Temporary grid for the next state
-std::vector<bool> nextGrid(WIDTH *HEIGHT);
+std::vector<uint8_t> nextGrid(WIDTH *HEIGHT);
 
 // Initialize the grid with random values
 extern "C"
@@ -21,7 +22,7 @@ extern "C"
         srand(time(nullptr));
         for (int i = 0; i < WIDTH * HEIGHT; i++)
         {
-            grid[i] = rand() % 2 == 0;
+            grid[i] = rand() % 2;
         }
     }
 
@@ -61,20 +62,20 @@ extern "C"
             {
                 int index = y * WIDTH + x;
                 int neighbors = countNeighbors(x, y);
-                bool alive = grid[index];
+                bool alive = grid[index] != 0;
 
                 // Apply Conway's Game of Life rules
                 if (alive && (neighbors < 2 || neighbors > 3))
                 {
-                    nextGrid[index] = false; // Die from underpopulation or overpopulation
+                    nextGrid[index] = 0; // Die from underpopulation or overpopulation
                 }
                 else if (!alive && neighbors == 3)
                 {
-                    nextGrid[index] = true; // Reproduction
+                    nextGrid[index] = 1; // Reproduction
                 }
                 else
                 {
-                    nextGrid[index] = alive; // Stay the same
+                    nextGrid[index] = grid[index]; // Stay the same
                 }
             }
         }
@@ -85,7 +86,7 @@ extern "C"
 
     // Get a pointer to the grid data for JavaScript to access
     EMSCRIPTEN_KEEPALIVE
-    bool *getGridData()
+    uint8_t *getGridData()
     {
         return grid.data();
     }
